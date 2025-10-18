@@ -7,34 +7,31 @@ import torch
 # Load the model and tokenizer from Hugging Face
 model_id = "mistralai/Mistral-Small-3.2-24B-Instruct-2506"
 
-#tokenizer = AutoTokenizer.from_pretrained(model_id)
 tokenizer = MistralTokenizer.from_hf_hub(model_id)
 
-#model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto") # device_map="auto" uses your GPU if available
-
 model = Mistral3ForConditionalGeneration.from_pretrained(
-    model_id, torch_dtype=torch.bfloat16
+    model_id, 
+    torch_dtype=torch.bfloat16,
+    device_map="auto"
 )
 
-# Format your prompt in the correct chat template
+# Manual prompt formatting for Mistral instruct models
 messages = [
     {"role": "user", "content": "What is the capital of France?"}
 ]
 
-tokenized = tokenizer.encode_chat_completion(messages)     
-input_ids = torch.tensor([tokenized.tokens])
-attention_mask = torch.ones_like(input_ids)
-# Generate a response from the model
-output = model.generate(
-    input_ids=input_ids,
-    attention_mask=attention_mask,              
+# Manually create the prompt in Mistral format
+prompt = f"<s>[INST] {messages[0]['content']} [/INST]"
+
+# Tokenize and generate
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+outputs = model.generate(
+    **inputs,
     max_new_tokens=100,
-)[0]
-# Decode and print the model's response
-decoded_output = tokenizer.decode(output[len(tokenized.tokens) :])
-print(decoded_output)
-# Example output: "The capital of France is Paris."
-#from transformers import AutoModelForCausalLM, AutoTokenizer   
-#from mistral_common.tokens.tokenizers.mistral import MistralTokenizer
-#from transformers import Mistral3ForConditionalGeneration
-#import torch   
+    temperature=0.7,
+    do_sample=True
+)
+
+response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+print(response)
