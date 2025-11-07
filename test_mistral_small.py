@@ -23,7 +23,7 @@ SYSTEM_PROMPT = load_system_prompt(model_id, "SYSTEM_PROMPT.txt")
 tokenizer = MistralTokenizer.from_hf_hub(model_id)
 
 model = Mistral3ForConditionalGeneration.from_pretrained(
-    model_id, torch_dtype=torch.bfloat16
+    model_id, dtype=torch.bfloat16
 )
 
 image_url = "https://static.wikia.nocookie.net/essentialsdocs/images/7/70/Battle.png/revision/latest?cb=20220523172438"
